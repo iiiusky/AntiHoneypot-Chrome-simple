@@ -1,0 +1,30 @@
+{
+	"manifest_version": 2,
+	"name": "AntiHoneypot",
+	"version": "1.0",
+	"description": "反蜜罐,根据已知蜜罐特征去做检测,防止蜜罐使用jsonp接口爆菊.",
+	"author": "iiusky",
+	"homepage_url":"https://www.03sec.com",
+	"icons":
+	{
+		"48": "icon.png",
+		"128": "icon.png"
+	},
+	"browser_action": 
+	{
+		"default_icon": "icon.png"
+	},
+	"permissions":
+	[
+		"tabs",
+		"activeTab",
+		"webRequest",
+		"webRequestBlocking",
+		"browsingData",
+		"http://*/*",
+		"https://*/*"
+	],
+	"background":{
+		"scripts": ["background.js"]
+	}
+}
