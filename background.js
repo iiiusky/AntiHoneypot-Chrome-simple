@@ -1,6 +1,6 @@
 var honeypotUrlCache = {};
 var http = {};
-var ruleStr = '{"test111":[{"filename":"xss.min.js","content":"hello"}],"test222":[{"filename":"main.js","content":"word"}]}'
+var ruleStr = '{"默安幻阵":[{"filename":"record.js","content":"document[__Ox3f21b[0xd]](__Ox3f21b"}],"HFish":[{"filename":"x.js","content":"sec_key"}]}'
 var rule = JSON.parse(ruleStr);
 
 // 给数组添加push2方法，用于向数组push不重复的数据
@@ -12,46 +12,6 @@ Array.prototype.push2 =function(){
         }
     }
 };
-
-// XMLHttpRequest 请求方法包装
-http.quest = function (option, callback) {
-    var url = option.url;
-    var method = option.method;
-    var data = option.data;
-    var timeout = option.timeout || 0;
-    var xhr = new XMLHttpRequest();
-    (timeout > 0) && (xhr.timeout = timeout);
-    xhr.onreadystatechange = function () {
-      if (xhr.readyState == 4) {
-        if (xhr.status >= 200 && xhr.status < 400) {
-          var result = xhr.responseText;
-          try { result = JSON.parse(xhr.responseText); } catch (e) { }
-          callback && callback(null, result);
-        } else {
-          callback && callback('status: ' + xhr.status);
-        }
-      }
-    }.bind(this);
-    
-    xhr.open(method, url, true);
-    if (typeof data === 'object') {
-      try {
-        data = JSON.stringify(data);
-      } catch (e) { }
-    }
-
-    xhr.send(data);
-    xhr.ontimeout = function () {
-      callback && callback('timeout');
-      console.log('%c连%c接%c超%c时', 'color:red', 'color:orange', 'color:purple', 'color:green');
-    };
-  };
-  
-  http.get = function (url, callback) {
-    var option = url.url ? url : { url: url };
-    option.method = 'get';
-    this.quest(option, callback);
-  };
 
 // 规则匹配,匹配成功将数据放入缓存
 function checkForRule(url,content){
@@ -76,15 +36,23 @@ function checkForRule(url,content){
 
 // 传入 URL 检查是否为蜜罐
 function checkHoneypot(url){
+  console.log("[Honeypot] check url:"+url)
   let status = false
 
   // 判断是否在历史检测出来中的缓存中存在
+  console.log(honeypotUrlCache)
   if (honeypotUrlCache.hasOwnProperty(url)) {
     status = true
   }else{
     // 不存在就进行请求，然后解析内容用规则去匹配
-    http.get(url, function (err, result) {
-      checkForRule(url,result)
+    $.ajax({
+        type: "get",
+        async: false,
+        url: url,
+        success: function (data) {
+            checkForRule(url,data)
+            console.log("[Honeypot] checkForRule over.")
+        }
     });
   }
 
@@ -93,7 +61,7 @@ function checkHoneypot(url){
     status = true
   }
 
-  return status;
+  return status
 }
 
 
@@ -104,8 +72,8 @@ chrome.webRequest.onBeforeRequest.addListener(details => {
         "since": t
       },function(){})
   if(details.type == 'script'){
-    if (checkHoneypot(details.url)) {
-      alert("蜜罐,快跑,当前蜜罐脚本已屏蔽!");
+      if (checkHoneypot(details.url)) {
+      alert("当前为"+honeypotUrlCache[details.url]+"蜜罐,快跑,当前蜜罐脚本已屏蔽!");
       return {cancel: true}; 
     }
   }
